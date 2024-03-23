@@ -1,7 +1,6 @@
-package com.example;
+package com.hunterrumours;
 
 import com.google.inject.Provides;
-import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -12,17 +11,19 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
+import javax.inject.Inject;
+
 @Slf4j
 @PluginDescriptor(
-	name = "Example"
+	name = "Hunter Rumours"
 )
-public class ExamplePlugin extends Plugin
+public class HunterRumoursPlugin extends Plugin
 {
 	@Inject
 	private Client client;
 
 	@Inject
-	private ExampleConfig config;
+	private HunterRumoursConfig config;
 
 	@Override
 	protected void startUp() throws Exception
@@ -41,13 +42,13 @@ public class ExamplePlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
+
 		}
 	}
 
 	@Provides
-	ExampleConfig provideConfig(ConfigManager configManager)
+    HunterRumoursConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(ExampleConfig.class);
+		return configManager.getConfig(HunterRumoursConfig.class);
 	}
 }
