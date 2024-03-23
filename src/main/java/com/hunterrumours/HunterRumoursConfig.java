@@ -7,6 +7,7 @@ import net.runelite.client.config.ConfigItem;
 @ConfigGroup("HunterRumours")
 public interface HunterRumoursConfig extends Config
 {
+	String CONFIG_GROUP = "HunterRumours";
 	@ConfigItem(
 		keyName = "rumourInfoBox",
 		name = "Rumours Info Box",
