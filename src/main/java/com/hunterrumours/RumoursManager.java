@@ -1,6 +1,7 @@
 package com.hunterrumours;
 
 import lombok.Getter;
+import net.runelite.api.ItemID;
 import net.runelite.api.NpcID;
 
 import java.util.regex.Pattern;
@@ -163,6 +164,11 @@ public class RumoursManager {
                 infoBox = new RumourInfoBox(itemManager.getImage(rumourCreature.creatureID), plugin, activeRumour, rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
                 infoBoxManager.addInfoBox(infoBox);
             }
+        }
+        else
+        {
+            infoBox = new RumourInfoBox(itemManager.getImage(ItemID.BANK_FILLER), plugin, activeRumour, rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
+            infoBoxManager.addInfoBox(infoBox);
         }
        // }
     }

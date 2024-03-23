@@ -103,7 +103,7 @@ class RumourInfoBox extends InfoBox
             sb.append(ColorUtil.wrapWithColorTag(hunterString, Color.GREEN));
 
             sb.append("</br> Tools: " + hunterCreature.hunterItems);
-            sb.append("</br> Locations: " + hunterCreature.locations);
+            sb.append("</br> Locations: " + hunterCreature.locations + "</br>");
 
             if (rumourWolf != null && !rumourWolf.equals(activeRumour))
             {
