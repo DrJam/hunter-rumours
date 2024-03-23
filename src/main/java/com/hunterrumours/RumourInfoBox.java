@@ -95,14 +95,15 @@ class RumourInfoBox extends InfoBox
             {
                 hunterString = " (Wolf - Master)";
             }
+            else
+            {
+                hunterString = " (Unknown)";
+            }
 
             sb.append(ColorUtil.wrapWithColorTag(hunterString, Color.GREEN));
-            sb.append("</br>");
 
-            sb.append(" Tools: " + hunterCreature.hunterItems + "</br>");
-            sb.append(" Locations: " + hunterCreature.locations + "</br>");
-
-            sb.append("</br>");
+            sb.append("</br> Tools: " + hunterCreature.hunterItems);
+            sb.append("</br> Locations: " + hunterCreature.locations);
 
             if (rumourWolf != null && !rumourWolf.equals(activeRumour))
             {
@@ -135,6 +136,6 @@ class RumourInfoBox extends InfoBox
     private void addOtherHunter(StringBuilder sb, String rumour, String hunterDisplayText)
     {
         String creatureName = HunterCreature.getHunterCreatureFromCreatureName(rumour).name;
-        sb.append(ColorUtil.wrapWithColorTag(creatureName + hunterDisplayText + "</br>", Color.ORANGE));
+        sb.append(ColorUtil.wrapWithColorTag("</br>" + creatureName + hunterDisplayText, Color.ORANGE));
     }
 }

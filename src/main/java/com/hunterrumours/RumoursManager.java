@@ -34,8 +34,8 @@ public class RumoursManager {
     private static final String WOLF = "Wolf";
 
 
-    private static final Pattern RUMOUR_CHECK_PATTERN = Pattern.compile("(?:Your current rumour target is a )([a-zA-Z ]+)(?:You'll)");
-    private static final Pattern RUMOUR_ASSIGN_PATTERN = Pattern.compile("(tropicalwagtail|wildkebbit|sapphireglacialis|swamplizard|spinedlarupia|barb-tailedkebbit|snowyknight|pricklykebbit|embertailedjerboa|hornedgraahk|spottedkebbit|blackwarlock|orangesalamander|razor-backedkebbit|sabre-toothedkebbit|greychinchompa|sabre-toothedkyatt|darkkebbit|pyrefox|redsalamander|red/carnivorouschinchompa|sunlightmoth|dashingkebbit|sunlightantelope|moonlightmoth|tecusalamander|herbiboar|moonlightantelope)",Pattern.CASE_INSENSITIVE);
+    private static final Pattern RUMOUR_CHECK_PATTERN = Pattern.compile("(?:Your current rumour target is a) ([a-zA-Z -]+)(?:\\. You'll)([a-zA-Z ]+)");
+    private static final Pattern RUMOUR_ASSIGN_PATTERN = Pattern.compile("(tropicalwagtail|wildkebbit|sapphireglacialis|swamplizard|spinedlarupia|barb-tailedkebbit|snowyknight|pricklykebbit|embertailedjerboa|hornedgraahk|spottedkebbit|blackwarlock|orangesalamander|razor-backedkebbit|sabre-toothedkebbit|greychinchompa|sabre-toothedkyatt|darkkebbit|pyrefox|redsalamander|redchinchompa|sunlightmoth|dashingkebbit|sunlightantelope|moonlightmoth|tecusalamander|herbiboar|moonlightantelope)",Pattern.CASE_INSENSITIVE);
 
     private static final String RUMOUR_REWARDED_1 = "Anotheronedone\\?You'rereallydoingalotfortheguild\\.";
     private static final String RUMOUR_REWARDED_2 = "Thanksforthat\\.I'llmarkoffthatreportforyou\\.Wouldyoulikeanotherrumour\\?";
@@ -148,23 +148,23 @@ public class RumoursManager {
 
     private void handleInfoBox()
     {
-        if (activeRumour != (infoBox == null ? null : infoBox.getActiveRumour()))
+        //if (activeRumour != (infoBox == null ? null : infoBox.getActiveRumour()))
+        //{
+        if (infoBox != null)
         {
-            if (infoBox != null)
+            infoBoxManager.removeInfoBox(infoBox);
+            infoBox = null;
+        }
+        if (activeRumour != null)
+        {
+            HunterCreature rumourCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
+            if (rumourCreature != null)
             {
-                infoBoxManager.removeInfoBox(infoBox);
-                infoBox = null;
-            }
-            if (activeRumour != null)
-            {
-                HunterCreature rumourCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
-                if (rumourCreature != null)
-                {
-                    infoBox = new RumourInfoBox(itemManager.getImage(rumourCreature.creatureID), plugin, activeRumour, rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
-                    infoBoxManager.addInfoBox(infoBox);
-                }
+                infoBox = new RumourInfoBox(itemManager.getImage(rumourCreature.creatureID), plugin, activeRumour, rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
+                infoBoxManager.addInfoBox(infoBox);
             }
         }
+       // }
     }
 
     private void handleHunterMasterWidgetDialog()
