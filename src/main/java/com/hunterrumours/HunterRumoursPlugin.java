@@ -29,7 +29,43 @@ public class HunterRumoursPlugin extends Plugin {
 	@Inject
 	private RumoursManager rumoursManager;
 
-	private static final int HUNTER_GUILD_BASEMENT_REGION_ID = 6291;
+	private WorldPoint lastTickLocation;
+
+	private static final int HUNTER_GUILD_REGION_ID = 6291;
+
+	@Override
+	protected void startUp() throws Exception
+	{
+	}
+
+	@Override
+	protected void shutDown() throws Exception
+	{
+		rumoursManager.setStoredRumours();
+	}
+
+	@Subscribe
+	public void onRuneScapeProfileChanged(RuneScapeProfileChanged e)
+	{
+		String rumourGilman = rumoursManager.getStoredRumour("rumourGilman");
+		rumoursManager.setRumour(rumourGilman,"Gilman");
+		String rumourAco = rumoursManager.getStoredRumour("rumourAco");
+		rumoursManager.setRumour(rumourAco,"Aco");
+		String rumourTeco = rumoursManager.getStoredRumour("rumourTeco");
+		rumoursManager.setRumour(rumourTeco,"Teco");
+		String rumourOrnus = rumoursManager.getStoredRumour("rumourOrnus");
+		rumoursManager.setRumour(rumourOrnus,"Ornus");
+		String rumourCervus = rumoursManager.getStoredRumour("rumourCervus");
+		rumoursManager.setRumour(rumourCervus,"Cervus");
+		String rumourWolf = rumoursManager.getStoredRumour("rumourWolf");
+		rumoursManager.setRumour(rumourWolf,"Wolf");
+
+		String activeRumour = rumoursManager.getStoredRumour("activeRumour");
+		rumoursManager.setActiveRumour(activeRumour);
+
+		rumoursManager.setStoredRumours();
+		rumoursManager.updateData(false);
+	}
 
 	@Provides
 	HunterRumoursConfig provideConfig(ConfigManager configManager) {
@@ -46,21 +82,34 @@ public class HunterRumoursPlugin extends Plugin {
 	}
 
 	@Subscribe
-	public void onRuneScapeProfileChanged(RuneScapeProfileChanged e) {
-		// String rumourGilman = rumoursManager.getStoredRumour("rumourGilman");
-		// String rumourAco = rumoursManager.getStoredRumour("rumourAco");
-		// String rumourTeco = rumoursManager.getStoredRumour("rumourTeco");
-		// String rumourOrnus = rumoursManager.getStoredRumour("rumourOrnus");
-		// String rumourCervus = rumoursManager.getStoredRumour("rumourCervus");
-		// String rumourWolf = rumoursManager.getStoredRumour("rumourWolf");
-		// rumoursManager.setAllRumours(rumourGilman, rumourAco, rumourCervus,
-		// rumourOrnus, rumourTeco, rumourWolf);
+	public void onGameTick(GameTick t)
+	{
+
+
+		if (client.getGameState() != GameState.LOGGED_IN)
+		{
+			lastTickLocation = null;
+			return;
+		}
 
 		// String activeRumour = rumoursManager.getStoredRumour("activeRumour");
 		// rumoursManager.setActiveRumour(activeRumour);
 
-		// rumoursManager.setStoredRumours();
-		// rumoursManager.updateData();
+		if (loc == null || loc.getRegionID() != lastTickLocation.getRegionID())
+		{
+			return;
+		}
+
+		if (!config.showRumourInfoBox())
+		{
+			rumoursManager.removeInfoBox();
+		}
+		else
+		{
+			rumoursManager.updateData(loc.getRegionID() == HUNTER_GUILD_REGION_ID);
+		}
+
+		
 	}
 
 	@Subscribe
@@ -70,47 +119,18 @@ public class HunterRumoursPlugin extends Plugin {
 		}
 	}
 
-	@Subscribe
-	public void onGameTick(GameTick t) {
-		// if (client.getGameState() != GameState.LOGGED_IN)
-		// {
-		// lastTickLocation = null;
-		// return;
-		// }
-
-		// WorldPoint loc = lastTickLocation;
-		// lastTickLocation = client.getLocalPlayer().getWorldLocation();
-
-		// if (loc == null || loc.getRegionID() != lastTickLocation.getRegionID())
-		// {
-		// return;
-		// }
-
-		// //if (loc.getRegionID() == HUNTER_GUILD_REGION_ID)
-		// //{
-
-		// //}
-
-		// rumoursManager.updateData();
-	}
-
-	@Subscribe
-	void onChatMessage(ChatMessage event) {
-		handleWhistleMessage(event);
-		handleHunterDialog(event);
-		// if (event.getType() != ChatMessageType.GAMEMESSAGE) {
-		// return;
-		// }
-
-		// if (rumoursManager.isCheckHunterTask(event.getMessage())) {
-		// rumoursManager.updateData();
-		// }
+		if (rumoursManager.isCheckHunterTask(event.getMessage()))
+		{
+			rumoursManager.updateData(true);
+		}
 
 	}
 
-	private void handleWhistleMessage(ChatMessage message) {
-		if (message.getType() != ChatMessageType.GAMEMESSAGE) {
-			return;
+	@Subscribe void onStatChanged(StatChanged event)
+	{
+		if (event.getSkill() == Skill.HUNTER)
+		{
+			rumoursManager.updateData(true);
 		}
 		rumoursManager.updateFromWhistle(message);
 	}
