@@ -34,7 +34,7 @@ public class RumoursManager {
             .compile("You do not have an active rumour right now.");
 
     private static final Pattern RUMOUR_COMPLETION_PATTERN = Pattern.compile(
-            "(?:Another one done\\? You're really|Thanks for that\\. I'll mark off that report)");
+            "(?:Another one done|Thanks for that)");
 
     private static final String CONFIG_KEY_ACTIVE_RUMOUR = "activeRumour";
     private static final String CONFIG_KEY_GILMAN_RUMOUR = "rumourGilman";
@@ -177,6 +177,11 @@ public class RumoursManager {
         infoBoxManager.addInfoBox(infoBox);
     }
 
+    public void updateFromSavedInfo() {
+        loadAllRumours();
+        updateInfoBox();
+    }
+
     public void updateFromWhistle(ChatMessage message) {
 
         Matcher activeMacher = WHISTLE_ACTIVE_PATTERN.matcher(message.getMessage());
@@ -236,6 +241,12 @@ public class RumoursManager {
         var isGilmanAssignment = hunterTalking == GILMAN && creature != rumourGilman && rumourGilman != null;
         var isRumourConfirmation = hunterTalking != null && hunterReferenced != null && creature != null;
 
+        log.info("isRumourCompletion: " + isRumourCompletion);
+        log.info("isAssignmantOrGilman: " + isAssignmantOrGilman);
+        log.info("isGilmanRemembering: " + isGilmanRemembering);
+        log.info("isGilmanAssignment: " + isGilmanAssignment);
+        log.info("isRumourConfirmation: " + isRumourConfirmation);
+
         if (isRumourCompletion) {
             rumourCompleted(hunterTalking);
         } else if (isAssignmantOrGilman) {
@@ -257,10 +268,8 @@ public class RumoursManager {
 
     private void setStoredRumour(@Nullable String rumour, String configKey) {
         if (rumour != null) {
-            log.info("Setting rumour in config: " + configKey + " " + rumour);
             configManager.setRSProfileConfiguration(HunterRumoursConfig.CONFIG_GROUP, configKey, rumour);
         } else {
-            log.info("Unsetting rumour in config: " + configKey);
             configManager.unsetRSProfileConfiguration(HunterRumoursConfig.CONFIG_GROUP, configKey);
         }
     }
@@ -279,10 +288,8 @@ public class RumoursManager {
     public String getStoredRumour(String configKey) {
         try {
             String result = configManager.getRSProfileConfiguration(HunterRumoursConfig.CONFIG_GROUP, configKey);
-            log.info("Loaded rumour from config: " + configKey + " " + result);
             return result;
         } catch (NumberFormatException ignored) {
-            log.warn("Failed to load rumour from config:" + configKey);
             return null;
         }
     }
