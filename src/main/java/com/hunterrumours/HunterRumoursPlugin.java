@@ -38,7 +38,6 @@ public class HunterRumoursPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-
 	}
 
 	@Override
@@ -67,7 +66,7 @@ public class HunterRumoursPlugin extends Plugin
 		rumoursManager.setActiveRumour(activeRumour);
 
 		rumoursManager.setStoredRumours();
-		rumoursManager.updateData();
+		rumoursManager.updateData(false);
 	}
 
 	@Provides
@@ -79,6 +78,8 @@ public class HunterRumoursPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick t)
 	{
+
+
 		if (client.getGameState() != GameState.LOGGED_IN)
 		{
 			lastTickLocation = null;
@@ -93,12 +94,16 @@ public class HunterRumoursPlugin extends Plugin
 			return;
 		}
 
-		//if (loc.getRegionID() == HUNTER_GUILD_REGION_ID)
-		//{
+		if (!config.showRumourInfoBox())
+		{
+			rumoursManager.removeInfoBox();
+		}
+		else
+		{
+			rumoursManager.updateData(loc.getRegionID() == HUNTER_GUILD_REGION_ID);
+		}
 
-		//}
-
-		rumoursManager.updateData();
+		
 	}
 
 
@@ -111,7 +116,7 @@ public class HunterRumoursPlugin extends Plugin
 
 		if (rumoursManager.isCheckHunterTask(event.getMessage()))
 		{
-			rumoursManager.updateData();
+			rumoursManager.updateData(true);
 		}
 
 	}
@@ -120,7 +125,7 @@ public class HunterRumoursPlugin extends Plugin
 	{
 		if (event.getSkill() == Skill.HUNTER)
 		{
-			rumoursManager.updateData();
+			rumoursManager.updateData(true);
 		}
 	}
 }

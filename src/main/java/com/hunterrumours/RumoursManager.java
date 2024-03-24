@@ -141,25 +141,30 @@ public class RumoursManager {
         }
     }
 
-    public void updateData()
+    public void updateData(boolean displayInfoBox)
     {
         handleHunterMasterWidgetDialog();
-        handleInfoBox();
+        if (displayInfoBox)
+        {
+            handleInfoBox();
+        }
+    }
+
+    public void removeInfoBox()
+    {
+        if (infoBox != null)
+        {
+            infoBoxManager.removeInfoBox(infoBox);
+            infoBox = null;
+        }
     }
 
     private void handleInfoBox()
     {
         //if (activeRumour != (infoBox == null ? null : infoBox.getActiveRumour()))
         //{
-        if (infoBox != null)
-        {
-            infoBoxManager.removeInfoBox(infoBox);
-            infoBox = null;
-        }
-        if (!config.showRumourInfoBox())
-        {
-            return;
-        }
+        removeInfoBox();
+
         if (activeRumour != null)
         {
             HunterCreature rumourCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
