@@ -1,13 +1,11 @@
-package com.hunterrumours;
+package com.drjam.rumourreminder;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 import net.runelite.client.util.ColorUtil;
 
-@Slf4j
 class RumourInfoBox extends InfoBox {
     private String rumourGilman = null;
     private String rumourAco = null;
@@ -16,11 +14,19 @@ class RumourInfoBox extends InfoBox {
     private String rumourTeco = null;
     private String rumourWolf = null;
     private String activeRumour = null;
+    private boolean isRumourCompleted = false;
 
-    private HunterRumoursConfig config;
-
-    RumourInfoBox(BufferedImage image, Plugin plugin, String activeRumour, String rumourGilman, String rumourAco,
-            String rumourCervus, String rumourOrnus, String rumourTeco, String rumourWolf, HunterRumoursConfig config) {
+    RumourInfoBox(
+            BufferedImage image,
+            Plugin plugin,
+            String activeRumour,
+            String rumourGilman,
+            String rumourAco,
+            String rumourCervus,
+            String rumourOrnus,
+            String rumourTeco,
+            String rumourWolf,
+            boolean isRumourCompleted) {
         super(image, plugin);
         this.activeRumour = activeRumour != null ? activeRumour.toLowerCase() : null;
         this.rumourGilman = rumourGilman != null ? rumourGilman.toLowerCase() : null;
@@ -29,8 +35,7 @@ class RumourInfoBox extends InfoBox {
         this.rumourOrnus = rumourOrnus != null ? rumourOrnus.toLowerCase() : null;
         this.rumourTeco = rumourTeco != null ? rumourTeco.toLowerCase() : null;
         this.rumourWolf = rumourWolf != null ? rumourWolf.toLowerCase() : null;
-        this.config = config;
-
+        this.isRumourCompleted = isRumourCompleted;
     }
 
     public String getActiveRumour() {
@@ -39,11 +44,17 @@ class RumourInfoBox extends InfoBox {
 
     @Override
     public String getText() {
+        if (this.isRumourCompleted) {
+            return "Done";
+        }
         return null;
     }
 
     @Override
     public Color getTextColor() {
+        if (this.isRumourCompleted) {
+            return Color.GREEN;
+        }
         return null;
     }
 

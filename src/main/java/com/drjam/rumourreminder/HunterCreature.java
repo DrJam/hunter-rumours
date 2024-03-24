@@ -1,4 +1,4 @@
-package com.hunterrumours;
+package com.drjam.rumourreminder;
 
 import net.runelite.api.ItemID;
 import java.util.*;
@@ -67,7 +67,7 @@ public enum HunterCreature {
             0, ItemID.KEBBITY_TUFT),
     CARNIVOROUS_CHINCHOMPA("Red chinchompa",
             "Box trap",
-            "Red Chinchompa Hunting Ground, Gwenith Hunter Area, Feldip Hunter Area (AKS)",
+            "Feldip Hunter Area (AKS), Gwenith Hunter Area",
             1, ItemID.RED_CHINCHOMPA_TUFT),
     CHINCHOMPA("Chinchompa",
             "Box trap",
@@ -134,13 +134,13 @@ public enum HunterCreature {
     String hunterItems;
     String locations;
     Integer maxHit;
-    Integer creatureID;
+    Integer targetItemID;
 
-    HunterCreature(String name, String hunterItems, String locations, Integer maxHit, Integer creatureID) {
+    HunterCreature(String name, String hunterItems, String locations, Integer maxHit, Integer targetItemID) {
         this.name = name;
         this.hunterItems = hunterItems;
         this.locations = locations;
         this.maxHit = maxHit;
-        this.creatureID = creatureID;
+        this.targetItemID = targetItemID;
     }
 }

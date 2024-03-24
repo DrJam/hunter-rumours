@@ -1,7 +1,8 @@
-package com.hunterrumours;
+package com.drjam.rumourreminder;
 
 import lombok.Getter;
 import net.runelite.api.ItemID;
+import net.runelite.api.NpcID;
 import net.runelite.api.events.ChatMessage;
 
 import java.util.regex.Pattern;
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.InventoryID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
@@ -51,10 +53,10 @@ public class RumoursManager {
     private ItemManager itemManager;
 
     @Inject
-    private HunterRumoursPlugin plugin;
+    private RumourReminderPlugin plugin;
 
     @Inject
-    HunterRumoursConfig config;
+    RumourReminderConfig config;
 
     @Inject
     private InfoBoxManager infoBoxManager;
@@ -70,9 +72,43 @@ public class RumoursManager {
     private String rumourWolf = null;
     private String activeRumour = null;
 
+    public boolean isRumourCompleted = false;
+
     @Getter
     @Setter
     private RumourInfoBox infoBox;
+
+    public boolean isInfoBoxVisible() {
+        return infoBox != null;
+    }
+
+    public Integer getHighlightNpcId() {
+        if (!isRumourCompleted) {
+            return null;
+        }
+        if (activeRumour == null) {
+            return null;
+        }
+        if (!isInfoBoxVisible()) {
+            return null;
+        }
+
+        if (rumourGilman != null && activeRumour.toLowerCase().equals(rumourGilman.toLowerCase())) {
+            return NpcID.HUNTMASTER_GILMAN_NOVICE;
+        } else if (rumourAco != null && activeRumour.toLowerCase().equals(rumourAco.toLowerCase())) {
+            return NpcID.GUILD_HUNTER_ACO_EXPERT;
+        } else if (rumourCervus != null && activeRumour.toLowerCase().equals(rumourCervus.toLowerCase())) {
+            return NpcID.GUILD_HUNTER_CERVUS_ADEPT;
+        } else if (rumourOrnus != null && activeRumour.toLowerCase().equals(rumourOrnus.toLowerCase())) {
+            return NpcID.GUILD_HUNTER_ORNUS_ADEPT;
+        } else if (rumourTeco != null && activeRumour.toLowerCase().equals(rumourTeco.toLowerCase())) {
+            return NpcID.GUILD_HUNTER_TECO_EXPERT;
+        } else if (rumourWolf != null && activeRumour.toLowerCase().equals(rumourWolf.toLowerCase())) {
+            return NpcID.GUILD_HUNTER_WOLF_MASTER;
+        }
+
+        return null;
+    }
 
     public void setAllRumours(@Nullable String rumourGilman, @Nullable String rumourAco, @Nullable String rumourCervus,
             @Nullable String rumourOrnus, @Nullable String rumourTeco, @Nullable String rumourWolf) {
@@ -165,13 +201,13 @@ public class RumoursManager {
             if (rumourCreature == null) {
                 return;
             }
-            infoBox = new RumourInfoBox(itemManager.getImage(rumourCreature.creatureID), plugin, activeRumour,
-                    rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
+            infoBox = new RumourInfoBox(itemManager.getImage(rumourCreature.targetItemID), plugin, activeRumour,
+                    rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, isRumourCompleted);
 
         } else {
             infoBox = new RumourInfoBox(itemManager.getImage(ItemID.GUILD_HUNTER_HEADWEAR), plugin, activeRumour,
                     rumourGilman,
-                    rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
+                    rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, isRumourCompleted);
 
         }
         infoBoxManager.addInfoBox(infoBox);
@@ -179,11 +215,28 @@ public class RumoursManager {
 
     public void updateFromSavedInfo() {
         loadAllRumours();
+        updateRumourCompleted();
         updateInfoBox();
     }
 
-    public void updateFromWhistle(ChatMessage message) {
+    public void updateRumourCompleted() {
+        var items = this.client.getItemContainer(InventoryID.INVENTORY).getItems();
+        if (items == null || activeRumour == null) {
+            isRumourCompleted = false;
+            return;
+        }
 
+        var activeContractHunterCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour);
+        for (var item : items) {
+            if (item.getId() == activeContractHunterCreature.targetItemID) {
+                isRumourCompleted = true;
+                return;
+            }
+        }
+        isRumourCompleted = false;
+    }
+
+    public void updateFromWhistle(ChatMessage message) {
         Matcher activeMacher = WHISTLE_ACTIVE_PATTERN.matcher(message.getMessage());
         Matcher noActiveMacher = WHISTLE_NO_ACTIVE_PATTERN.matcher(message.getMessage());
 
@@ -198,6 +251,7 @@ public class RumoursManager {
             this.activeRumour = activeMacher.group(1);
         }
         saveAllStoredRumours();
+        updateRumourCompleted();
         updateInfoBox();
     }
 
@@ -263,14 +317,15 @@ public class RumoursManager {
         }
 
         saveAllStoredRumours();
+        updateRumourCompleted();
         updateInfoBox();
     }
 
     private void setStoredRumour(@Nullable String rumour, String configKey) {
         if (rumour != null) {
-            configManager.setRSProfileConfiguration(HunterRumoursConfig.CONFIG_GROUP, configKey, rumour);
+            configManager.setRSProfileConfiguration(RumourReminderConfig.CONFIG_GROUP, configKey, rumour);
         } else {
-            configManager.unsetRSProfileConfiguration(HunterRumoursConfig.CONFIG_GROUP, configKey);
+            configManager.unsetRSProfileConfiguration(RumourReminderConfig.CONFIG_GROUP, configKey);
         }
     }
 
@@ -287,7 +342,7 @@ public class RumoursManager {
     @Nullable
     public String getStoredRumour(String configKey) {
         try {
-            String result = configManager.getRSProfileConfiguration(HunterRumoursConfig.CONFIG_GROUP, configKey);
+            String result = configManager.getRSProfileConfiguration(RumourReminderConfig.CONFIG_GROUP, configKey);
             return result;
         } catch (NumberFormatException ignored) {
             return null;
