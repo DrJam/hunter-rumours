@@ -116,37 +116,98 @@ public class RumoursManager {
         }
     }
 
-    public void updateData(boolean displayInfoBox)
-    {
-        handleHunterMasterWidgetDialog();
-        if (displayInfoBox)
-        {
-            handleInfoBox();
+    private void rumourAssigned(String target, String hunter) {
+        this.activeRumour = target;
+        rumourConfirmed(target, hunter);
+    }
+
+    private void resetRumours() {
+        this.rumourGilman = null;
+        this.rumourAco = null;
+        this.rumourCervus = null;
+        this.rumourOrnus = null;
+        this.rumourTeco = null;
+        this.rumourWolf = null;
+    }
+
+    private void rumourConfirmed(String target, String hunter) {
+        if (hunter.contains(GILMAN)) {
+            this.rumourGilman = target;
+        }
+        if (hunter.contains(CERVUS)) {
+            this.rumourCervus = target;
+        }
+        if (hunter.contains(ORNUS)) {
+            this.rumourOrnus = target;
+        }
+        if (hunter.contains(ACO)) {
+            this.rumourAco = target;
+        }
+        if (hunter.contains(TECO)) {
+            this.rumourTeco = target;
+        }
+        if (hunter.contains(WOLF)) {
+            this.rumourWolf = target;
         }
     }
 
-    public void removeInfoBox()
-    {
-        if (infoBox != null)
-        {
+    // public void updateData() {
+    // // handleHunterMasterWidgetDialog();
+    // updateInfoBox();
+    // }
+
+    private void updateInfoBox() {
+        if (infoBox != null) {
             infoBoxManager.removeInfoBox(infoBox);
             infoBox = null;
         }
+
+        if (!config.showRumourInfoBox()) {
+            return;
+        }
+
+        if (activeRumour != null) {
+            HunterCreature rumourCreature = HunterCreature
+                    .getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
+            if (rumourCreature == null) {
+                return;
+            }
+            infoBox = new RumourInfoBox(itemManager.getImage(rumourCreature.creatureID), plugin, activeRumour,
+                    rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
+
+        } else {
+            infoBox = new RumourInfoBox(itemManager.getImage(ItemID.BANK_FILLER), plugin, activeRumour, rumourGilman,
+                    rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
+
+        }
+        infoBoxManager.addInfoBox(infoBox);
     }
 
-    private void handleInfoBox()
-    {
-        //if (activeRumour != (infoBox == null ? null : infoBox.getActiveRumour()))
-        //{
-        removeInfoBox();
+    public void updateFromWhistle(ChatMessage message) {
 
-        if (activeRumour != null)
-        {
-            HunterCreature rumourCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
-            if (rumourCreature != null)
-            {
-                infoBox = new RumourInfoBox(itemManager.getImage(rumourCreature.creatureID), plugin, activeRumour, rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
-                infoBoxManager.addInfoBox(infoBox);
+        Matcher matcher = WHISTLE_PATTERN.matcher(message.getMessage());
+
+        if (!matcher.find()) {
+            return;
+        }
+        this.activeRumour = matcher.group(1);
+        updateInfoBox();
+    }
+
+    @SuppressWarnings("unused")
+    public void updateFromDialog(ChatMessage message) {
+        String hunterTalking = null;
+        String hunterReferenced = null;
+        String creature = null;
+
+        var messageParts = message.getMessage().split("\\|");
+        var prefix = messageParts[0];
+        var contents = messageParts[1];
+
+        for (String hunterName : HUNTER_NAMES) {
+            if (prefix.contains(hunterName)) {
+                hunterTalking = hunterName;
+                break;
             }
         }
         for (String hunterName : HUNTER_NAMES) {
