@@ -67,7 +67,7 @@ public class HunterRumoursPlugin extends Plugin
 		rumoursManager.setActiveRumour(activeRumour);
 
 		rumoursManager.setStoredRumours();
-
+		rumoursManager.updateData();
 	}
 
 	@Provides
@@ -93,12 +93,12 @@ public class HunterRumoursPlugin extends Plugin
 			return;
 		}
 
-		if (config.showRumourInfoBox() && loc.getRegionID() == HUNTER_GUILD_REGION_ID)
-		{
-			rumoursManager.updateData();
-		}
+		//if (loc.getRegionID() == HUNTER_GUILD_REGION_ID)
+		//{
 
+		//}
 
+		rumoursManager.updateData();
 	}
 
 
@@ -109,7 +109,7 @@ public class HunterRumoursPlugin extends Plugin
 			return;
 		}
 
-		if (rumoursManager.isCheckHunterTask(event.getMessage()) && config.showRumourInfoBox())
+		if (rumoursManager.isCheckHunterTask(event.getMessage()))
 		{
 			rumoursManager.updateData();
 		}
@@ -118,7 +118,7 @@ public class HunterRumoursPlugin extends Plugin
 
 	@Subscribe void onStatChanged(StatChanged event)
 	{
-		if (event.getSkill() == Skill.HUNTER && config.showRumourInfoBox())
+		if (event.getSkill() == Skill.HUNTER)
 		{
 			rumoursManager.updateData();
 		}

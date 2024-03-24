@@ -156,6 +156,10 @@ public class RumoursManager {
             infoBoxManager.removeInfoBox(infoBox);
             infoBox = null;
         }
+        if (!config.showRumourInfoBox())
+        {
+            return;
+        }
         if (activeRumour != null)
         {
             HunterCreature rumourCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());

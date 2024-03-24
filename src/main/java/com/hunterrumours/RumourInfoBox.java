@@ -61,7 +61,12 @@ class RumourInfoBox extends InfoBox
     {
         StringBuilder sb = new StringBuilder();
 
-        HunterCreature hunterCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
+        HunterCreature hunterCreature = null;
+
+        if (activeRumour != null)
+        {
+            hunterCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
+        }
 
         if (hunterCreature != null)
         {
