@@ -6,8 +6,6 @@ import net.runelite.api.events.ChatMessage;
 
 import java.util.regex.Pattern;
 
-import ch.qos.logback.classic.Logger;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -15,14 +13,10 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.widgets.ComponentID;
-import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
-import net.runelite.client.util.Text;
 
 @Slf4j
 public class RumoursManager {
@@ -34,18 +28,13 @@ public class RumoursManager {
     private static final String GILMAN = "Gilman";
     private static final List<String> HUNTER_NAMES = Arrays.asList(WOLF, ACO, TECO, ORNUS, CERVUS, GILMAN);
 
-    private static final Pattern WHISTLE_PATTERN = Pattern
+    private static final Pattern WHISTLE_ACTIVE_PATTERN = Pattern
             .compile("(?:Your current rumour target is (?:a|an)) ([a-zA-Z -]+)(?:\\. You'll)([a-zA-Z ]+)");
-    private static final Pattern HUNTER_NAMES_PATTERN = Pattern.compile("(wolf|aco|teco|cervus|ornus|gilman)",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern HUNTER_CREATURES_PATTERN = Pattern.compile(
-            "(tropicalwagtail|wildkebbit|sapphireglacialis|swamplizard|spinedlarupia|barb-tailedkebbit|snowyknight|pricklykebbit|embertailedjerboa|hornedgraahk|spottedkebbit|blackwarlock|orangesalamander|razor-backedkebbit|sabre-toothedkebbit|greychinchompa|sabre-toothedkyatt|darkkebbit|pyrefox|redsalamander|redchinchompa|sunlightmoth|dashingkebbit|sunlightantelope|moonlightmoth|tecusalamander|herbiboar|moonlightantelope)",
-            Pattern.CASE_INSENSITIVE);
+    private static final Pattern WHISTLE_NO_ACTIVE_PATTERN = Pattern
+            .compile("You do not have an active rumour right now.");
 
     private static final Pattern RUMOUR_COMPLETION_PATTERN = Pattern.compile(
-            "Another one done\\? You're really|Thanks for that\\. I'll mark off that report");
-    private static final String RUMOUR_REWARDED_1 = "Anotheronedone\\?You'rereallydoingalotfortheguild\\.";
-    private static final String RUMOUR_REWARDED_2 = "Thanksforthat\\.I'llmarkoffthatreportforyou\\.Wouldyoulikeanotherrumour\\?";
+            "(?:Another one done\\? You're really|Thanks for that\\. I'll mark off that report)");
 
     private static final String CONFIG_KEY_ACTIVE_RUMOUR = "activeRumour";
     private static final String CONFIG_KEY_GILMAN_RUMOUR = "rumourGilman";
@@ -96,6 +85,7 @@ public class RumoursManager {
     }
 
     private void rumourCompleted(String hunter) {
+        this.activeRumour = null;
         if (hunter.contains(GILMAN)) {
             this.rumourGilman = null;
         }
@@ -118,7 +108,7 @@ public class RumoursManager {
 
     private void rumourAssigned(String target, String hunter) {
         this.activeRumour = target;
-        rumourConfirmed(target, hunter);
+        rumourConfirmed(target, hunter, true);
     }
 
     private void resetRumours() {
@@ -130,7 +120,10 @@ public class RumoursManager {
         this.rumourWolf = null;
     }
 
-    private void rumourConfirmed(String target, String hunter) {
+    private void rumourConfirmed(String target, String hunter, boolean isActive) {
+        if (isActive) {
+            this.activeRumour = target;
+        }
         if (hunter.contains(GILMAN)) {
             this.rumourGilman = target;
         }
@@ -151,18 +144,18 @@ public class RumoursManager {
         }
     }
 
-    // public void updateData() {
-    // // handleHunterMasterWidgetDialog();
-    // updateInfoBox();
-    // }
-
-    private void updateInfoBox() {
+    public void removeInfoBox() {
         if (infoBox != null) {
             infoBoxManager.removeInfoBox(infoBox);
             infoBox = null;
         }
+    }
 
-        if (!config.showRumourInfoBox()) {
+    private void updateInfoBox() {
+        removeInfoBox();
+
+        if (activeRumour == null && rumourGilman == null && rumourAco == null && rumourCervus == null
+                && rumourOrnus == null && rumourTeco == null && rumourWolf == null) {
             return;
         }
 
@@ -176,7 +169,8 @@ public class RumoursManager {
                     rumourGilman, rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
 
         } else {
-            infoBox = new RumourInfoBox(itemManager.getImage(ItemID.BANK_FILLER), plugin, activeRumour, rumourGilman,
+            infoBox = new RumourInfoBox(itemManager.getImage(ItemID.GUILD_HUNTER_HEADWEAR), plugin, activeRumour,
+                    rumourGilman,
                     rumourAco, rumourCervus, rumourOrnus, rumourTeco, rumourWolf, config);
 
         }
@@ -185,16 +179,23 @@ public class RumoursManager {
 
     public void updateFromWhistle(ChatMessage message) {
 
-        Matcher matcher = WHISTLE_PATTERN.matcher(message.getMessage());
+        Matcher activeMacher = WHISTLE_ACTIVE_PATTERN.matcher(message.getMessage());
+        Matcher noActiveMacher = WHISTLE_NO_ACTIVE_PATTERN.matcher(message.getMessage());
 
-        if (!matcher.find()) {
+        if (!activeMacher.find() && !noActiveMacher.find()) {
             return;
         }
-        this.activeRumour = matcher.group(1);
+
+        loadAllRumours();
+        if (noActiveMacher.find()) {
+            this.activeRumour = null;
+        } else {
+            this.activeRumour = activeMacher.group(1);
+        }
+        saveAllStoredRumours();
         updateInfoBox();
     }
 
-    @SuppressWarnings("unused")
     public void updateFromDialog(ChatMessage message) {
         String hunterTalking = null;
         String hunterReferenced = null;
@@ -218,94 +219,41 @@ public class RumoursManager {
         }
         for (HunterCreature creatureType : HunterCreature.values()) {
             if (contents.toLowerCase().contains(creatureType.name.toLowerCase())) {
-                creature = creatureType.getLookupName();
+                creature = creatureType.name;
                 break;
             }
         }
 
-        if (hunterTalking == null && hunterReferenced == null && creature == null) {
+        if (hunterTalking == null) {
             return;
         }
 
-        if (hunterTalking != null && contents.matches(RUMOUR_COMPLETION_PATTERN.pattern())) {
-            log.info("rumour completed for " + hunterTalking);
+        loadAllRumours();
+
+        var isRumourCompletion = hunterTalking != null && contents.matches(RUMOUR_COMPLETION_PATTERN.pattern());
+        var isAssignmantOrGilman = hunterTalking != null && hunterReferenced == null && creature != null;
+        var isGilmanRemembering = hunterTalking == GILMAN && contents.startsWith("I seem to remember");
+        var isGilmanAssignment = hunterTalking == GILMAN && creature != rumourGilman && rumourGilman != null;
+        var isRumourConfirmation = hunterTalking != null && hunterReferenced != null && creature != null;
+
+        if (isRumourCompletion) {
             rumourCompleted(hunterTalking);
-        } else if (hunterTalking != null && hunterReferenced == null && creature != null) {
-            if (hunterTalking == GILMAN && contents.startsWith("I seem to remember")) {
-                log.info("gilman remembering " + creature);
-                rumourConfirmed(creature, hunterTalking);
-            } else {
-                log.info("rumour assigned: " + creature + " " + hunterTalking);
-                if (hunterTalking == GILMAN && creature != rumourGilman && rumourGilman != null) {
-                    log.info("gilman rumour assigned, cleared others: " + creature);
+        } else if (isAssignmantOrGilman) {
+            if (isGilmanRemembering) {
+                rumourConfirmed(creature, hunterTalking, false);
+            } else {// is Assignment
+                if (isGilmanAssignment) {
                     resetRumours();
                 }
                 rumourAssigned(creature, hunterTalking);
             }
-        } else if (hunterTalking != null && hunterReferenced != null && creature != null) {
-            log.info("rumour confirmed: " + creature + " " + hunterReferenced);
-            rumourConfirmed(creature, hunterReferenced);
+        } else if (isRumourConfirmation) {
+            rumourConfirmed(creature, hunterReferenced, true);
         }
+
         saveAllStoredRumours();
         updateInfoBox();
     }
-
-    // private void handleHunterMasterWidgetDialog() {
-    // Widget npcDialog = client.getWidget(ComponentID.DIALOG_NPC_HEAD_MODEL);
-
-    // if (npcDialog == null) {
-    // return;
-    // }
-
-    // String dialogNPCName =
-    // Text.removeTags((client.getWidget(ComponentID.DIALOG_NPC_NAME).getText()));
-
-    // if (npcDialog == null || !(dialogNPCName.contains(GILMAN) ||
-    // dialogNPCName.contains(ACO) ||
-    // dialogNPCName.contains(CERVUS) || dialogNPCName.contains(ORNUS) ||
-    // dialogNPCName.contains(TECO)
-    // || dialogNPCName.contains(WOLF))) {
-    // return;
-    // }
-
-    // String dialogText =
-    // Text.removeTags(client.getWidget(ComponentID.DIALOG_NPC_TEXT).getText());
-    // dialogText = dialogText.replaceAll("\\s", "");
-    // if (dialogText.equals(RUMOUR_REWARDED_1) ||
-    // dialogText.equals(RUMOUR_REWARDED_2)) {
-    // setRumour(null, dialogNPCName);
-    // setActiveRumour(null);
-    // }
-
-    // if (dialogText.contains(GILMAN) || dialogText.contains(ACO) ||
-    // dialogText.contains(CERVUS) || dialogText.contains(ORNUS) ||
-    // dialogText.contains(TECO)
-    // || dialogText.contains(WOLF)) {
-    // return;
-    // }
-
-    // Matcher matcher = HUNTER_CREATURES.matcher(dialogText);
-
-    // if (!matcher.find()) {
-    // return;
-    // }
-
-    // String creature = matcher.group(1);
-
-    // setRumour(creature, dialogNPCName);
-    // setActiveRumour(creature);
-    // }
-
-    // public boolean isCheckHunterTask(String message) {
-    // Matcher matcher = WHISTLE_CHECK.matcher(message);
-
-    // if (!matcher.find()) {
-    // return false;
-    // }
-
-    // setActiveRumour(matcher.group(1));
-    // return true;
-    // }
 
     private void setStoredRumour(@Nullable String rumour, String configKey) {
         if (rumour != null) {

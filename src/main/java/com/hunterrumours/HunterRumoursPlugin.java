@@ -42,71 +42,33 @@ public class HunterRumoursPlugin extends Plugin {
 
 	@Override
 	protected void shutDown() throws Exception {
-		// rumoursManager.setStoredRumours();
+		rumoursManager.removeInfoBox();
 	}
 
 	@Subscribe
 	public void onRuneScapeProfileChanged(RuneScapeProfileChanged e) {
-		// String rumourGilman = rumoursManager.getStoredRumour("rumourGilman");
-		// String rumourAco = rumoursManager.getStoredRumour("rumourAco");
-		// String rumourTeco = rumoursManager.getStoredRumour("rumourTeco");
-		// String rumourOrnus = rumoursManager.getStoredRumour("rumourOrnus");
-		// String rumourCervus = rumoursManager.getStoredRumour("rumourCervus");
-		// String rumourWolf = rumoursManager.getStoredRumour("rumourWolf");
-		// rumoursManager.setAllRumours(rumourGilman, rumourAco, rumourCervus,
-		// rumourOrnus, rumourTeco, rumourWolf);
-
-		// String activeRumour = rumoursManager.getStoredRumour("activeRumour");
-		// rumoursManager.setActiveRumour(activeRumour);
-
-		// rumoursManager.setStoredRumours();
-		// rumoursManager.updateData();
 	}
 
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event) {
 		if (event.getGameState() == GameState.LOGGED_IN) {
-			rumoursManager.loadAllRumours();
 		}
-	}
-
-	@Subscribe
-	public void onGameTick(GameTick t) {
-		// if (client.getGameState() != GameState.LOGGED_IN)
-		// {
-		// lastTickLocation = null;
-		// return;
-		// }
-
-		// WorldPoint loc = lastTickLocation;
-		// lastTickLocation = client.getLocalPlayer().getWorldLocation();
-
-		// if (loc == null || loc.getRegionID() != lastTickLocation.getRegionID())
-		// {
-		// return;
-		// }
-
-		// //if (loc.getRegionID() == HUNTER_GUILD_REGION_ID)
-		// //{
-
-		// //}
-
-		// rumoursManager.updateData();
 	}
 
 	@Subscribe
 	void onChatMessage(ChatMessage event) {
 		handleWhistleMessage(event);
 		handleHunterDialog(event);
-		// if (event.getType() != ChatMessageType.GAMEMESSAGE) {
-		// return;
-		// }
-
-		// if (rumoursManager.isCheckHunterTask(event.getMessage())) {
-		// rumoursManager.updateData();
-		// }
-
 	}
+
+	@Subscribe
+	void onGameTick(GameTick event) {
+		// var location = client.getLocalPlayer().getWorldLocation();
+		// if (location.getRegionID() == HUNTER_GUILD_BASEMENT_REGION_ID) {
+		// 	rumoursManager.loadAllRumours();
+		
+	}
+
 
 	private void handleWhistleMessage(ChatMessage message) {
 		if (message.getType() != ChatMessageType.GAMEMESSAGE) {
@@ -124,16 +86,11 @@ public class HunterRumoursPlugin extends Plugin {
 		if (location.getRegionID() != HUNTER_GUILD_BASEMENT_REGION_ID) {
 			return;
 		}
-		// get location and check region id
 
 		rumoursManager.updateFromDialog(message);
 	}
 
 	@Subscribe
 	void onStatChanged(StatChanged event) {
-		// if (event.getSkill() == Skill.HUNTER)
-		// {
-		// rumoursManager.updateData();
-		// }
 	}
 }

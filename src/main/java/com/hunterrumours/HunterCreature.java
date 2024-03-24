@@ -38,12 +38,12 @@ public enum HunterCreature {
 
     static {
         Arrays.stream(values()).forEach(hunterCreature -> {
-            creatureNameToHunterCreature.put(hunterCreature.getLookupName(), hunterCreature);
+            creatureNameToHunterCreature.put(hunterCreature.name.toLowerCase(), hunterCreature);
         });
     }
 
     public static HunterCreature getHunterCreatureFromCreatureName(String creatureName) {
-        return creatureNameToHunterCreature.get(creatureName);
+        return creatureNameToHunterCreature.get(creatureName.toLowerCase());
     }
 
     String name;
