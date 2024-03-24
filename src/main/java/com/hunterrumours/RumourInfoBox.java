@@ -56,8 +56,8 @@ class RumourInfoBox extends InfoBox {
             activeCreature = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
         }
 
+        sb.append(ColorUtil.wrapWithColorTag("Hunter Rumours:", Color.WHITE));
         if (activeCreature != null) {
-            sb.append(ColorUtil.wrapWithColorTag("Hunter Rumours:", Color.WHITE));
             sb.append("</br>");
             sb.append(ColorUtil.wrapWithColorTag(activeCreature.name, Color.GREEN));
 

@@ -235,7 +235,7 @@ public class RumoursManager {
 
         loadAllRumours();
 
-        var isRumourCompletion = hunterTalking != null && contents.matches(RUMOUR_COMPLETION_PATTERN.pattern());
+        var isRumourCompletion = hunterTalking != null && RUMOUR_COMPLETION_PATTERN.matcher(contents).find();
         var isAssignmantOrGilman = hunterTalking != null && hunterReferenced == null && creature != null;
         var isGilmanRemembering = hunterTalking == GILMAN && contents.startsWith("I seem to remember");
         var isGilmanAssignment = hunterTalking == GILMAN && creature != rumourGilman && rumourGilman != null;
