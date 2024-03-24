@@ -17,4 +17,5 @@ public interface HunterRumoursConfig extends Config
 	{
 		return true;
 	}
+
 }
