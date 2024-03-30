@@ -116,7 +116,7 @@ public enum HunterCreature {
     MOONLIGHT_ANTELOPE("Moonlight antelope",
             "Spiked pit (teasing stick, knife, logs/axe)",
             "Hunter Guild",
-            0, ItemID.ANTELOPE_HOOF_SHARD),;
+            0, ItemID.ANTELOPE_HOOF_SHARD_29241),;
 
     private static final Map<String, HunterCreature> creatureNameToHunterCreature = new HashMap<>();
 
