@@ -1,6 +1,7 @@
 package com.drjam.rumourreminder;
 
 import net.runelite.api.ItemID;
+
 import java.util.*;
 
 public enum HunterCreature {
@@ -15,7 +16,7 @@ public enum HunterCreature {
             0, ItemID.KEBBITY_TUFT),
     SAPPHIRE_GLACIALIS("Sapphire glacialis",
             "Butterfly net",
-            "Rellekka Hunter Area (DKS)",
+            "Farming Guild (CIR), Rellekka Hunter Area (DKS)",
             0, ItemID.BLUE_BUTTERFLY_WING),
     SWAMP_LIZARD("Swamp lizard",
             "Net trap (small net, rope)",
@@ -31,7 +32,7 @@ public enum HunterCreature {
             0, ItemID.KEBBITY_TUFT),
     SNOWY_KNIGHT("Snowy knight",
             "Butterfly net",
-            "Weiss, Rellekka Hunter Area (DKS)",
+            "Farming Guild (CIR), Weiss, Rellekka Hunter Area (DKS)",
             0, ItemID.WHITE_BUTTERFLY_WING),
     PRICKLY_KEBBIT("Prickly kebbit",
             "Deadfall (knife, logs/axe)",
@@ -51,7 +52,7 @@ public enum HunterCreature {
             0, ItemID.KEBBITY_TUFT),
     BLACK_WARLOCK("Black warlock",
             "Butterfly net",
-            "Feldip Hunter Area (AKS)",
+            "Farming Guild (CIR), Feldip Hunter Area (AKS)",
             0, ItemID.BLACK_BUTTERFLY_WING),
     ORANGE_SALAMANDER("Orange salamander",
             "Net trap (small net, rope)",
