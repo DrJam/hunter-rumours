@@ -30,7 +30,7 @@ class RumourReminderOverlay extends OverlayPanel {
     @Override
     public Dimension render(Graphics2D graphics) {
 
-        if (this.plugin.hasEnoughWhistleCharges) {
+        if (!this.config.whistleWarning() || this.plugin.hasEnoughWhistleCharges) {
             return super.render(graphics);
         }
 
