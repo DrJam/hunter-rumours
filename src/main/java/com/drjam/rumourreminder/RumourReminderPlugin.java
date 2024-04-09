@@ -15,7 +15,6 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.WorldChanged;
-import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -26,9 +25,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.api.coords.WorldPoint;
 
-import java.awt.Color;
 import java.util.List;
-import java.util.ArrayList;
 
 import javax.inject.Inject;
 
@@ -47,9 +44,6 @@ public class RumourReminderPlugin extends Plugin {
 
 	@Inject
 	private RumourReminderConfig config;
-
-	@Inject
-	private ClientThread clientThread;
 
 	private static final int HUNTER_GUILD_GROUND_FLOOR_REGION_ID = 6191;
 	private static final int HUNTER_GUILD_BASEMENT_REGION_ID = 6291;
