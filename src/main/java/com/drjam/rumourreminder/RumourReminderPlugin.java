@@ -23,9 +23,11 @@ import net.runelite.client.game.npcoverlay.HighlightedNpc;
 import net.runelite.client.game.npcoverlay.NpcOverlayService;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.api.coords.WorldPoint;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
@@ -43,6 +45,12 @@ public class RumourReminderPlugin extends Plugin {
 	private NpcOverlayService npcOverlayService;
 
 	@Inject
+	private RumourReminderOverlay overlay;
+
+	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
 	private RumourReminderConfig config;
 
 	private static final int HUNTER_GUILD_GROUND_FLOOR_REGION_ID = 6191;
@@ -50,6 +58,13 @@ public class RumourReminderPlugin extends Plugin {
 
 	private WorldPoint currentLocation = null;
 	private boolean xpInitialised = false;
+
+	private String whistleChargesPrefix = "Your quetzal whistle has";
+	private Pattern whistleChargesPattern = Pattern.compile("Your quetzal whistle has (\\d+) charges remaining.");
+	private Pattern whistleRechargePattern = Pattern
+			.compile("(?:There you go\\. Some whistle charges|Looks like the birds are all full for now\\.)");
+
+	public boolean hasEnoughWhistleCharges = true;
 
 	@Provides
 	RumourReminderConfig provideConfig(ConfigManager configManager) {
@@ -59,12 +74,14 @@ public class RumourReminderPlugin extends Plugin {
 	@Override
 	protected void startUp() throws Exception {
 		npcOverlayService.registerHighlighter(this::highlighter);
+		overlayManager.add(overlay);
 	}
 
 	@Override
 	protected void shutDown() throws Exception {
 		rumoursManager.removeInfoBox();
 		npcOverlayService.unregisterHighlighter(this::highlighter);
+		overlayManager.remove(overlay);
 		xpInitialised = false;
 	}
 
@@ -72,12 +89,9 @@ public class RumourReminderPlugin extends Plugin {
 	public void onRuneScapeProfileChanged(RuneScapeProfileChanged e) {
 	}
 
-	
 	@Subscribe
-	public void onConfigChanged(ConfigChanged configChanged)
-	{
-		if (!configChanged.getGroup().equals(RumourReminderConfig.CONFIG_GROUP))
-		{
+	public void onConfigChanged(ConfigChanged configChanged) {
+		if (!configChanged.getGroup().equals(RumourReminderConfig.CONFIG_GROUP)) {
 			return;
 		}
 		npcOverlayService.rebuild();
@@ -102,6 +116,61 @@ public class RumourReminderPlugin extends Plugin {
 	void onChatMessage(ChatMessage event) {
 		handleWhistleMessage(event);
 		handleHunterDialog(event);
+		handleWhistleCharges(event);
+		handleWhistleRecharge(event);
+	}
+
+	private void handleWhistleMessage(ChatMessage message) {
+		if (message.getType() != ChatMessageType.GAMEMESSAGE) {
+			return;
+		}
+		rumoursManager.updateFromWhistle(message);
+		npcOverlayService.rebuild();
+	}
+
+	private void handleHunterDialog(ChatMessage message) {
+		if (message.getType() != ChatMessageType.DIALOG) {
+			return;
+		}
+
+		var location = client.getLocalPlayer().getWorldLocation();
+		if (location.getRegionID() != HUNTER_GUILD_BASEMENT_REGION_ID) {
+			return;
+		}
+
+		rumoursManager.updateFromDialog(message);
+		npcOverlayService.rebuild();
+	}
+
+	private void handleWhistleCharges(ChatMessage message) {
+		if (message.getType() != ChatMessageType.GAMEMESSAGE) {
+			return;
+		}
+
+		if (!message.getMessage().startsWith(whistleChargesPrefix)) {
+			return;
+		}
+
+		var chargeMatcher = whistleChargesPattern.matcher(message.getMessage());
+
+		if (!chargeMatcher.find()) {
+			return;
+		}
+		var charges = Integer.parseInt(chargeMatcher.group(1));
+		this.hasEnoughWhistleCharges = charges > config.whistleWarningCharges();
+	}
+
+	private void handleWhistleRecharge(ChatMessage message) {
+		if (message.getType() != ChatMessageType.DIALOG) {
+			return;
+		}
+		
+		var rechargeMatcher = whistleRechargePattern.matcher(message.getMessage());
+		if (!rechargeMatcher.find()) {
+			return;
+		}
+
+		this.hasEnoughWhistleCharges = true;
 	}
 
 	@Subscribe
@@ -132,28 +201,6 @@ public class RumourReminderPlugin extends Plugin {
 
 	}
 
-	private void handleWhistleMessage(ChatMessage message) {
-		if (message.getType() != ChatMessageType.GAMEMESSAGE) {
-			return;
-		}
-		rumoursManager.updateFromWhistle(message);
-		npcOverlayService.rebuild();
-	}
-
-	private void handleHunterDialog(ChatMessage message) {
-		if (message.getType() != ChatMessageType.DIALOG) {
-			return;
-		}
-
-		var location = client.getLocalPlayer().getWorldLocation();
-		if (location.getRegionID() != HUNTER_GUILD_BASEMENT_REGION_ID) {
-			return;
-		}
-
-		rumoursManager.updateFromDialog(message);
-		npcOverlayService.rebuild();
-	}
-
 	@Subscribe
 	void onStatChanged(StatChanged event) {
 		if (event.getSkill() == Skill.HUNTER) {
@@ -182,12 +229,9 @@ public class RumourReminderPlugin extends Plugin {
 		Integer highlightId = rumoursManager.getHighlightNpcId();
 		List<Integer> equivalentIds = rumoursManager.getEquivalentHighlightNpcIds();
 
-
 		if (highlightId == null && equivalentIds.isEmpty()) {
 			return null;
 		}
-
-		log.info("Highlighting NPC: " + npcId + " with highlightId: " + highlightId + " and equivalentIds: " + equivalentIds.toString());
 
 		if (config.highlightTurnInhunter() && npcId.equals(highlightId)) {
 			return HighlightedNpc

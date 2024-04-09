@@ -36,7 +36,7 @@ public interface RumourReminderConfig extends Config {
 	@ConfigSection(
 			name = "Turn In Style",
 			description = "Style for the turn in hunter",
-			position = 3,
+			position = 2,
 			closedByDefault = true
 	)
 	String turnInSection = "turnInSection";
@@ -134,7 +134,7 @@ public interface RumourReminderConfig extends Config {
 	@ConfigSection(
 			name = "Equivalent Style",
 			description = "Style for the hunters with equivalent rumours",
-			position = 4,
+			position = 3,
 			closedByDefault = true
 	)
 	String equivalentSection = "equivalentSection";
@@ -229,5 +229,60 @@ public interface RumourReminderConfig extends Config {
 		return 0;
 	}
 
+	@ConfigSection(
+			name = "Whistle Warning",
+			description = "Warning for when you have no charges left on your Quetzal Whistle",
+			position = 4,
+			closedByDefault = false
+	)
+	String whistleWarningSection = "whistleWarningSection";
+	
+	@ConfigItem(
+		keyName = "whistleWarning",
+		name = "Enable Whistle Warning",
+		description = "Warns you when you have no charges left on your Quetzal Whistle",
+		position = 0,
+		section = whistleWarningSection
+	)
+	default boolean whistleWarning() {
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "whistleWarningCharges",
+		name = "Whistle Charges",
+		description = "The number of charges left on your Quetzal Whistle when the warning will be displayed",
+		position = 1,
+		section = whistleWarningSection
+	)
+	default int whistleWarningCharges() {
+		return 0;
+	}
+
+	@Alpha
+    @ConfigItem(
+            keyName = "whistleWarningTextColor",
+            name = "Text color",
+            description = "Configures the color of the whistle warning text",
+            position = 2,
+			section = whistleWarningSection
+    )
+    default Color whistleWarningTextColor() {
+        return Color.RED;
+    }
+
+    @Range(
+            max = 100
+    )
+    @ConfigItem(
+            keyName = "whistleWarningTextSize",
+            name = "Text size",
+            description = "Configures the size of the whistle warning text",
+            position = 3,
+			section = whistleWarningSection
+    )
+    default int whistleWarningTextSize() {
+        return 16;
+    }
 
 }
