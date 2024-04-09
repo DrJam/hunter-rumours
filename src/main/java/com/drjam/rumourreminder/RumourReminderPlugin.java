@@ -2,6 +2,7 @@ package com.drjam.rumourreminder;
 
 import com.google.inject.Provides;
 
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -14,8 +15,10 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.WorldChanged;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.RuneScapeProfileChanged;
 import net.runelite.client.game.npcoverlay.HighlightedNpc;
 import net.runelite.client.game.npcoverlay.NpcOverlayService;
@@ -24,9 +27,12 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.api.coords.WorldPoint;
 
 import java.awt.Color;
+import java.util.List;
+import java.util.ArrayList;
 
 import javax.inject.Inject;
 
+@Slf4j
 @PluginDescriptor(name = "Rumour Reminder", description = "Reminds you of the rumours you've heard in the Hunter's Guild", tags = {
 		"hunter", "rumour", "hunter's", "guild", "reminder", "contract", "varlamore", "task" })
 public class RumourReminderPlugin extends Plugin {
@@ -38,6 +44,12 @@ public class RumourReminderPlugin extends Plugin {
 
 	@Inject
 	private NpcOverlayService npcOverlayService;
+
+	@Inject
+	private RumourReminderConfig config;
+
+	@Inject
+	private ClientThread clientThread;
 
 	private static final int HUNTER_GUILD_GROUND_FLOOR_REGION_ID = 6191;
 	private static final int HUNTER_GUILD_BASEMENT_REGION_ID = 6291;
@@ -64,6 +76,17 @@ public class RumourReminderPlugin extends Plugin {
 
 	@Subscribe
 	public void onRuneScapeProfileChanged(RuneScapeProfileChanged e) {
+	}
+
+	
+	@Subscribe
+	public void onConfigChanged(ConfigChanged configChanged)
+	{
+		if (!configChanged.getGroup().equals(RumourReminderConfig.CONFIG_GROUP))
+		{
+			return;
+		}
+		npcOverlayService.rebuild();
 	}
 
 	@Subscribe
@@ -163,18 +186,43 @@ public class RumourReminderPlugin extends Plugin {
 	private HighlightedNpc highlighter(NPC npc) {
 		Integer npcId = npc.getId();
 		Integer highlightId = rumoursManager.getHighlightNpcId();
+		List<Integer> equivalentIds = rumoursManager.getEquivalentHighlightNpcIds();
 
-		if (highlightId == null || !npcId.equals(highlightId)) {
+
+		if (highlightId == null && equivalentIds.isEmpty()) {
 			return null;
 		}
 
-		Color highlightColor = Color.GREEN;
-		return HighlightedNpc
-				.builder()
-				.npc(npc)
-				.highlightColor(highlightColor)
-				.borderWidth(2)
-				.outline(true)
-				.build();
+		log.info("Highlighting NPC: " + npcId + " with highlightId: " + highlightId + " and equivalentIds: " + equivalentIds.toString());
+
+		if (config.highlightTurnInhunter() && npcId.equals(highlightId)) {
+			return HighlightedNpc
+					.builder()
+					.npc(npc)
+					.highlightColor(config.turnInColor())
+					.fillColor(config.turnInFillColor())
+					.hull(config.turnInHull())
+					.tile(config.turnInTile())
+					.outline(config.turnInOutline())
+					.borderWidth((float) config.turnInBorderWidth())
+					.outlineFeather(config.turnInOutlineFeather())
+					.build();
+		}
+
+		if (config.highlightEquivalent() && equivalentIds.contains(npcId)) {
+			return HighlightedNpc
+					.builder()
+					.npc(npc)
+					.highlightColor(config.equivalentColor())
+					.fillColor(config.equivalentFillColor())
+					.hull(config.equivalentHull())
+					.tile(config.equivalentTile())
+					.outline(config.equivalentOutline())
+					.borderWidth((float) config.equivalentBorderWidth())
+					.outlineFeather(config.equivalentOutlineFeather())
+					.build();
+		}
+
+		return null;
 	}
 }

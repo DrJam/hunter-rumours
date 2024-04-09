@@ -6,7 +6,7 @@ import net.runelite.api.NpcID;
 import net.runelite.api.events.ChatMessage;
 
 import java.util.regex.Pattern;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -108,6 +108,60 @@ public class RumoursManager {
         }
 
         return null;
+    }
+
+    public List<Integer> getEquivalentHighlightNpcIds() {
+        var result = new ArrayList<Integer>();
+        if (!isRumourCompleted) {
+            log.info("Rumour not completed");
+            return result;
+        }
+        if (activeRumour == null) {
+            log.info("Active rumour is null");
+            return result;
+        }
+        if (!isInfoBoxVisible()) {
+            log.info("Info box not visible");
+            return result;
+        }
+
+
+        if (rumourGilman != null && !activeRumour.toLowerCase().equals(rumourGilman.toLowerCase())
+                && hasEquivalentRumour(rumourGilman)) {
+            result.add(NpcID.HUNTMASTER_GILMAN_NOVICE);
+        }
+        if (rumourOrnus != null && !activeRumour.toLowerCase().equals(rumourOrnus.toLowerCase())
+                && hasEquivalentRumour(rumourOrnus)) {
+            result.add(NpcID.GUILD_HUNTER_ORNUS_ADEPT);
+        }
+        if (rumourCervus != null && !activeRumour.toLowerCase().equals(rumourCervus.toLowerCase())
+                && hasEquivalentRumour(rumourCervus)) {
+            result.add(NpcID.GUILD_HUNTER_CERVUS_ADEPT);
+        }
+        if (rumourAco != null && !activeRumour.toLowerCase().equals(rumourAco.toLowerCase())
+                && hasEquivalentRumour(rumourAco)) {
+            result.add(NpcID.GUILD_HUNTER_ACO_EXPERT);
+        }
+        if (rumourTeco != null && !activeRumour.toLowerCase().equals(rumourTeco.toLowerCase())
+                && hasEquivalentRumour(rumourTeco)) {
+            result.add(NpcID.GUILD_HUNTER_TECO_EXPERT);
+        }
+        if (rumourWolf != null && !activeRumour.toLowerCase().equals(rumourWolf.toLowerCase())
+                && hasEquivalentRumour(rumourWolf)) {
+            result.add(NpcID.GUILD_HUNTER_WOLF_MASTER);
+        }
+
+        return result;
+    }
+
+    private boolean hasEquivalentRumour(String rumour) {
+        if (rumour == null) {
+            return false;
+        }
+        var check = HunterCreature.getHunterCreatureFromCreatureName(rumour.toLowerCase());
+        var active = HunterCreature.getHunterCreatureFromCreatureName(activeRumour.toLowerCase());
+
+        return check.targetItemID.equals(active.targetItemID);
     }
 
     public void setAllRumours(@Nullable String rumourGilman, @Nullable String rumourAco, @Nullable String rumourCervus,
@@ -220,7 +274,12 @@ public class RumoursManager {
     }
 
     public void updateRumourCompleted() {
-        var items = this.client.getItemContainer(InventoryID.INVENTORY).getItems();
+        var inventory = this.client.getItemContainer(InventoryID.INVENTORY);
+        if (inventory == null) {
+            isRumourCompleted = false;
+            return;
+        }
+        var items = inventory.getItems();
         if (items == null || activeRumour == null) {
             isRumourCompleted = false;
             return;
