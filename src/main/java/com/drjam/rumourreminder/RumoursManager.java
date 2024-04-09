@@ -119,15 +119,12 @@ public class RumoursManager {
     public List<Integer> getEquivalentHighlightNpcIds() {
         var result = new ArrayList<Integer>();
         if (!isRumourCompleted) {
-            log.info("Rumour not completed");
             return result;
         }
         if (activeRumour == null) {
-            log.info("Active rumour is null");
             return result;
         }
         if (!isInfoBoxVisible()) {
-            log.info("Info box not visible");
             return result;
         }
 
