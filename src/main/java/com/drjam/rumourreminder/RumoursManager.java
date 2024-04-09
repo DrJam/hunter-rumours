@@ -45,6 +45,9 @@ public class RumoursManager {
     private static final String CONFIG_KEY_ORNUS_RUMOUR = "rumourOrnus";
     private static final String CONFIG_KEY_TECO_RUMOUR = "rumourTeco";
     private static final String CONFIG_KEY_WOLF_RUMOUR = "rumourWolf";
+    private static final String CONFIG_KEY_TEMP_BG_RUMOUR = "tempBgRumour";
+    private static final String CONFIG_KEY_TEMP_HUNTER = "tempHunter";
+    private static final String CONFIG_KEY_ACTIVE_IS_TEMP = "activeIsTemp";
 
     @Inject
     private Client client;
@@ -71,6 +74,9 @@ public class RumoursManager {
     private String rumourTeco = null;
     private String rumourWolf = null;
     private String activeRumour = null;
+    private Boolean activeIsTemp = null;
+    private String tempBgRumour = null;
+    private String tempHunter = null;
 
     public boolean isRumourCompleted = false;
 
@@ -125,7 +131,6 @@ public class RumoursManager {
             return result;
         }
 
-
         if (rumourGilman != null && !activeRumour.toLowerCase().equals(rumourGilman.toLowerCase())
                 && hasEquivalentRumour(rumourGilman)) {
             result.add(NpcID.HUNTMASTER_GILMAN_NOVICE);
@@ -164,16 +169,6 @@ public class RumoursManager {
         return check.targetItemID.equals(active.targetItemID);
     }
 
-    public void setAllRumours(@Nullable String rumourGilman, @Nullable String rumourAco, @Nullable String rumourCervus,
-            @Nullable String rumourOrnus, @Nullable String rumourTeco, @Nullable String rumourWolf) {
-        this.rumourGilman = rumourGilman;
-        this.rumourAco = rumourAco;
-        this.rumourCervus = rumourCervus;
-        this.rumourOrnus = rumourOrnus;
-        this.rumourTeco = rumourTeco;
-        this.rumourWolf = rumourWolf;
-    }
-
     private void rumourCompleted(String hunter) {
         this.activeRumour = null;
         if (hunter.contains(GILMAN)) {
@@ -197,8 +192,31 @@ public class RumoursManager {
     }
 
     private void rumourAssigned(String target, String hunter) {
+
         this.activeRumour = target;
         rumourConfirmed(target, hunter, true);
+    }
+
+    private String getRumour(String hunter) {
+        if (hunter.contains(GILMAN)) {
+            return rumourGilman;
+        }
+        if (hunter.contains(CERVUS)) {
+            return rumourCervus;
+        }
+        if (hunter.contains(ORNUS)) {
+            return rumourOrnus;
+        }
+        if (hunter.contains(ACO)) {
+            return rumourAco;
+        }
+        if (hunter.contains(TECO)) {
+            return rumourTeco;
+        }
+        if (hunter.contains(WOLF)) {
+            return rumourWolf;
+        }
+        return null;
     }
 
     private void resetRumours() {
@@ -208,6 +226,7 @@ public class RumoursManager {
         this.rumourOrnus = null;
         this.rumourTeco = null;
         this.rumourWolf = null;
+        this.clearTemp();
     }
 
     private void rumourConfirmed(String target, String hunter, boolean isActive) {
@@ -351,14 +370,10 @@ public class RumoursManager {
         var isRumourCompletion = hunterTalking != null && RUMOUR_COMPLETION_PATTERN.matcher(contents).find();
         var isAssignmantOrGilman = hunterTalking != null && hunterReferenced == null && creature != null;
         var isGilmanRemembering = hunterTalking == GILMAN && contents.startsWith("I seem to remember");
-        var isGilmanAssignment = hunterTalking == GILMAN && creature != rumourGilman && rumourGilman != null;
+        var isGilmanResetAssignment = hunterTalking == GILMAN && creature != null && !creature.equals(rumourGilman)
+                && rumourGilman != null;
         var isRumourConfirmation = hunterTalking != null && hunterReferenced != null && creature != null;
-
-        log.info("isRumourCompletion: " + isRumourCompletion);
-        log.info("isAssignmantOrGilman: " + isAssignmantOrGilman);
-        log.info("isGilmanRemembering: " + isGilmanRemembering);
-        log.info("isGilmanAssignment: " + isGilmanAssignment);
-        log.info("isRumourConfirmation: " + isRumourConfirmation);
+        var isTempAssignment = activeRumour == null && getRumour(hunterTalking) != null;
 
         if (isRumourCompletion) {
             rumourCompleted(hunterTalking);
@@ -366,7 +381,13 @@ public class RumoursManager {
             if (isGilmanRemembering) {
                 rumourConfirmed(creature, hunterTalking, false);
             } else {// is Assignment
-                if (isGilmanAssignment) {
+                if (this.activeRumour != null && this.activeIsTemp) {
+                    // if moving off a temp, put it back & clear
+                    this.reapplyBgRumour();
+                }
+                if (isTempAssignment) {
+                    tempBeingAssigned(hunterTalking);
+                } else if (isGilmanResetAssignment) {
                     resetRumours();
                 }
                 rumourAssigned(creature, hunterTalking);
@@ -378,6 +399,40 @@ public class RumoursManager {
         saveAllStoredRumours();
         updateRumourCompleted();
         updateInfoBox();
+    }
+
+    private void reapplyBgRumour() {
+        if (this.tempHunter.contains(GILMAN)) {
+            this.rumourGilman = this.tempBgRumour;
+        }
+        if (this.tempHunter.contains(CERVUS)) {
+            this.rumourCervus = this.tempBgRumour;
+        }
+        if (this.tempHunter.contains(ORNUS)) {
+            this.rumourOrnus = this.tempBgRumour;
+        }
+        if (this.tempHunter.contains(ACO)) {
+            this.rumourAco = this.tempBgRumour;
+        }
+        if (this.tempHunter.contains(TECO)) {
+            this.rumourTeco = this.tempBgRumour;
+        }
+        if (this.tempHunter.contains(WOLF)) {
+            this.rumourWolf = this.tempBgRumour;
+        }
+        this.clearTemp();
+    }
+
+    private void clearTemp() {
+        this.tempBgRumour = null;
+        this.tempHunter = null;
+        this.activeIsTemp = false;
+    }
+
+    private void tempBeingAssigned(String hunterTalking) {
+        this.tempBgRumour = getRumour(hunterTalking);
+        this.tempHunter = hunterTalking;
+        this.activeIsTemp = true;
     }
 
     private void setStoredRumour(@Nullable String rumour, String configKey) {
@@ -396,6 +451,9 @@ public class RumoursManager {
         setStoredRumour(rumourCervus, CONFIG_KEY_CERVUS_RUMOUR);
         setStoredRumour(rumourOrnus, CONFIG_KEY_ORNUS_RUMOUR);
         setStoredRumour(rumourWolf, CONFIG_KEY_WOLF_RUMOUR);
+        setStoredRumour(tempBgRumour, CONFIG_KEY_TEMP_BG_RUMOUR);
+        setStoredRumour(tempHunter, CONFIG_KEY_TEMP_HUNTER);
+        setStoredRumour(activeIsTemp.toString(), CONFIG_KEY_ACTIVE_IS_TEMP);
     }
 
     @Nullable
@@ -416,6 +474,9 @@ public class RumoursManager {
         rumourOrnus = getStoredRumour(CONFIG_KEY_ORNUS_RUMOUR);
         rumourTeco = getStoredRumour(CONFIG_KEY_TECO_RUMOUR);
         rumourWolf = getStoredRumour(CONFIG_KEY_WOLF_RUMOUR);
+        tempBgRumour = getStoredRumour(CONFIG_KEY_TEMP_BG_RUMOUR);
+        tempHunter = getStoredRumour(CONFIG_KEY_TEMP_HUNTER);
+        activeIsTemp = Boolean.parseBoolean(getStoredRumour(CONFIG_KEY_ACTIVE_IS_TEMP));
         updateInfoBox();
     }
 

@@ -38,10 +38,6 @@ class RumourInfoBox extends InfoBox {
         this.isRumourCompleted = isRumourCompleted;
     }
 
-    public String getActiveRumour() {
-        return activeRumour;
-    }
-
     @Override
     public String getText() {
         if (this.isRumourCompleted) {
