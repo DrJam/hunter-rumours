@@ -118,9 +118,6 @@ public class RumoursManager {
 
     public List<Integer> getEquivalentHighlightNpcIds() {
         var result = new ArrayList<Integer>();
-        if (!isRumourCompleted) {
-            return result;
-        }
         if (activeRumour == null) {
             return result;
         }
