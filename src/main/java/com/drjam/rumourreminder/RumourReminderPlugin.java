@@ -227,9 +227,8 @@ public class RumourReminderPlugin extends Plugin {
 	private HighlightedNpc highlighter(NPC npc) {
 		Integer npcId = npc.getId();
 		Integer highlightId = rumoursManager.getHighlightNpcId();
-		List<Integer> equivalentIds = rumoursManager.getEquivalentHighlightNpcIds();
 
-		if (highlightId == null && equivalentIds.isEmpty()) {
+		if (highlightId == null) {
 			return null;
 		}
 
@@ -244,20 +243,6 @@ public class RumourReminderPlugin extends Plugin {
 					.outline(config.turnInOutline())
 					.borderWidth((float) config.turnInBorderWidth())
 					.outlineFeather(config.turnInOutlineFeather())
-					.build();
-		}
-
-		if (config.highlightEquivalent() && equivalentIds.contains(npcId)) {
-			return HighlightedNpc
-					.builder()
-					.npc(npc)
-					.highlightColor(config.equivalentColor())
-					.fillColor(config.equivalentFillColor())
-					.hull(config.equivalentHull())
-					.tile(config.equivalentTile())
-					.outline(config.equivalentOutline())
-					.borderWidth((float) config.equivalentBorderWidth())
-					.outlineFeather(config.equivalentOutlineFeather())
 					.build();
 		}
 
